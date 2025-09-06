@@ -1,318 +1,441 @@
----
-title: "Final Project"
-author: "Muskan Khattak"
-date: "`r Sys.Date()`"
-documentclass: article
-geometry: margin=1in
-fontsize: 11pt
-output:
-  pdf_document:
-    toc: false
-    df_print: kable
-    fig_caption: false
-    number_sections: false
-    dev: pdf
-    highlight: tango
-  html_document:
-    theme: default
-    self_contained: true
-    toc: false
-    df_print: kable
-    fig_caption: false
-    number_sections: false
-    smart: true
-    dev: svg
----
+# Final Project: The College Scorecard dataset
 
-```{r setup, include = FALSE}
-# DO NOT ALTER THIS CHUNK
-# Set knitr options
-knitr::opts_chunk$set(
-  echo = TRUE,
-  eval = TRUE,
-  fig.width = 5,
-  fig.asp = 0.618,
-  out.width = "70%",
-  dpi = 120,
-  fig.align = "center",
-  cache = FALSE
-)
-# Load required packages
-suppressPackageStartupMessages(library(tidyverse))
-suppressPackageStartupMessages(library(infer))
-suppressPackageStartupMessages(library(modelr))
-suppressPackageStartupMessages(library(broom))
-# Load dataset
-college <- read_rds("college.rds") %>%
-  type_convert(
-    na=combine("", "NA", "PrivacySuppressed")
-  )
-# Set seed
-set.seed(98261936)
+## Summary
+
+For the final project, you will analyze the U.S. Department of Education's *College Scorecard* dataset.
+
+Your task is to come up with an interesting question to ask about the dataset which can then be answered using:
+
+* visualizations
+* summary statistics
+* either inference or modeling
+
+The rest of these instructions describe the dataset and what should go into your report. In addition there is a checklist at end of this document that summarizes what you need to include in your report.
+
+## About the Dataset
+
+You  will be working with the *College Scorecard* dataset started by The Obama Administration in September 2015. Each row in this dataset contains information about a college in the USA.
+
+The dataset is quite large (13.5 MB), and so cannot be distributed via GitHub. **You need to download the dataset and upload it** to RStudio's folder for this project. Once you have done so, it will loaded by default in the setup block of the `final_project.Rmd` file where you will write your   report (the variable name of the dataset is `college`).
+
+Because the dataset is so large, you will find it almost impossible to open in a tab in RStudio. Please **do not** try to open the `college` dataframe in RStudio - your RStudio will freeze up. Instead, you will have to rely on a table describing all the columns in the dataset. This is called a *data dictionary*, and is available as a Google Docs spreadsheet here: <https://docs.google.com/spreadsheets/d/1YrYiJ-J9rLhs4Qf5OCvHGMyUFyMKOMtMuGmpyt47mEY/edit?usp=sharing>.
+
+Each row in the *data dictionary tab* of the spreadsheet describes a column in the original dataset (i.e. the name of the column and a desciption of the data contained in that column).
+
+You will have to look through the data dictionary to understand the meaning of the variables, and this should be your starting point *before* you start running an analysis on the dataset.
+
+If you wish to take a look at the raw `college` data in table format, you should try saving just the first few rows as a new variable, and opening that in a tab in RStudio, e.g.:
+
+```r
+college_first6rows <- head(college)
 ```
 
+The `college` dataset includes data on a huge range of issues, including:
 
-## **Introduction**
+* location
+* demographics
+* admission standards
+* tuition rates
+* graduation rates
+* student loans
+* outcomes after graduation
+* ... and many more (almost 2000 different variables!)
 
-**Research Question:**  
-Is there a statistically significant difference in second-year withdrawal rates between transfer students and non-transfer (original) students at U.S. colleges?
 
-**Variables:**  
+**This is a large dataset that that contains millions of individual cells.**
+**As such, there is no one right way to approach this project.**
+**There are many different avenues that you can take, so have fun with it!**
 
-- *Response Variables:*  
-  - `WDRAW_2YR_TRANS_YR2_RT` 
-    (Percentage of second-year transfer students who withdrawal from institution)  
+
+## The final project report
+
+The final project is built around asking an interesting question about the dataset.
+
+Your project report should contain the following sections:
+
+* Introduction
+* Preprocessing
+* Visualization
+* Summary Statistics
+* Data Analysis
+* Conclusions
+
+Please see the description of each section for guidelines. A checklist of everything that needs to be included in your report is at the end of these instructions.
+
+### Introduction section
+
+In this section, you should write *at least* paragraph (or more) that introduces the question that you are investigating, and explains why it is an interesting question. You also need to state what variables you will use to answer the question, and whether you will use a hypothesis test (inference) or modeling.
+
+#### How to come up with a question...
+
+For this project, you have to come up with a questions that you can ask about the dataset. Here is a short list of criteria that your question must meet:
+
+1.  You question must be answerable by either inference or modeling (as you are required to apply one of these methods). In general I would recommend phrasing your question in one of the following structures:
+
+    i. *Is there a relationship between `response_variable` and `explanatory_variable(s)`?*
+  
+      This question will require you to create a linear model between the continuous response variable and the explanatory variables (which should all be continuous as well, so that it is easy to assess whether the linear model's assumptions are met).
     
-  - `WDRAW_ORIG_YR2_RT` 
-   (Percentage of second-year non-transfer students who withdrawal from institution)  
-
-- *Explanatory Variable:*  
-  - `Student_Type` 
-    (categorical: "Transfer" vs. "Original")  
+    ii. *Is there a difference in `test_statistic` between two categories of `explanatory_variable`?*
+  
+      This question will need statistical inference to answer. The `test_statistic` will either be the difference in proportions (categorical) or the difference in means (continuous) of the response variable. The explanatory variable must be categorical.
     
-**Hypotheses**
-
-  - NULL(H~0~): The mean withdraw rates are the same for both transfer and non-transfer(original) second year students.
+    Note that each of these question templates requires *two variables*.
   
-  - Second(H~1~): The mean withdrawal rates differ between original and transfer students
+    If you have taken statistics classes before, you may want to stretch yourself and ask a different type of question. Please feel free to reach out to me if you are comfortable going beyond the statistics we have covered in this class, and want to ask a question that doesn't fit into either of the structures suggested above.
+  
+2. Each row in the dataset is a college in the USA. Therefore **your question must be about colleges, not about students**. For example, you cannot ask "Is there a relationship between graduation rate and ethnicity of a student", because we do not have data on students. However, you could ask "Is there a relationship between the % of non-white students in a college and the graduation rate of each college?" (however, you may not use this question - I want you to come up with your own).
+
+
+3. Your question should be somewhat interesting. Ask yourself, "Would a newspaper publish an article on this topic?" (In contrast, you should not just pick two random continuous variables and throw them into a linear model to see what falls out...)
+
+**Once you have a question ready, you need to propose it to your group members:**
+
+* In-person sections will do this in class (you will also have a group channel in Slack, and the final list of questions you generate should be posted here).
+* Online sections will post and discuss their questions in a group channel in Slack.
+
+When proposing a question you need to provide your group members the following information:
+
+*   The question (written as a complete sentence in one of the two examples above).
+
+*   The names of each column you need to answer the question, as well as a brief description of what that column represents and an explanation of whether each one is an explanatory or response variable and whether each is continuous or categorical.
+
+*   Whether you would need to use a linear model or statistical inference to answer your question.
+
+*   1-2 sentences explaining why you think it's a worthwhile question to ask.
+
+An example of such a message (using our "bad" question from before) might be:
+
+> I would like to ask "Is there a relationship between the % of non-white students in a college and the graduation rate of each college?". The columns that I will use are:
+> * `PCT_WHITE` (the percent of white students, which will be converted into the percentage of non-white students). This is my explanatory variable.
+> * *etc. for your response variable(s)*
+> Since both columns are continuous variables, I will use a linear model to answer this question.
+>
+> I think this question is interesting because ...
+
+**After you have proposed your own question, you need to provide feedback on your group members questions.**
+
+You must respond to at least one question proposed by another group member with:
+
+* If their question is missing any information, then please point this out (e.g. "You did not specify whether this should use a linear model or a hypothesis test"). You can also supply the information yourself if you wish (e.g. "Since this question has two continuous variables, I think it would need a linear model").
+
+* If you disagree with something in their proposal, then (politely) point this out (e.g. "I think this question would need inference instead of a linear model since both variables are categorical.")
+
+* If the question does not seem to pass one of the criteria listed above, then point this out and explain why. (And, optionally, give a suggestion as to how the question could be improved.)
+
+* If you have something to add, then please do so! (E.g. another reason why this might be an interesting question to ask, in addition to the original one)
+
+Once your group has added its questions to its Slack channel, then please also post a quick message in that channel stating which question you will investigate for the rest of the project. (You can pick a question proposed by anyone in your group, including yourself, and multiple people in your group can pick the same question if they wish.)
+
+Your instructor may veto or require you to adjust any questions that do not meet the outlined criteria or that cannot be appropriately justified. Sending these messages in Slack and interacting with your group members in a timely manner **before the Milestone 1 deadline** will be counted as part of your Final Project grade.
+
+
+
+### Preprocessing section
+
+This dataset is structured and mostly clean, but there is still some *data preprocessing* that needs to be done before you can begin analysis.
+At a minimum, there are three clear tasks to complete and document in this first section of the R Markdown file before you continue on to the **Visualization** section:
+
+1.  After you have decided on the question you will answer, figure out which columns in the dataset you need to answer the questions.
+    Then, extract those columns using `select` and save the reduced dataset to another variable, for example `college_reduced`.
     
-**Method:**  
-Two-sided hypothesis test ( $\alpha$ = 0.05.) comparing means via permutation testing.
+2.  The column names are shortened abbreviations, and should be made more human-readable using the `rename` function.
+    Use the data dictionary, to help you figure out what the abbreviations mean.
 
-**Data Context:**
-The analysis compares institutional withdrawal rates for transfer (WDRAW_2YR_TRANS_YR2_RT) and non-transfer (WDRAW_ORIG_YR2_RT) students using college-level data from the U.S. Department of Education. Missing values (NA) in either column will be excluded during statistical testing to prevent bias, though retained for exploratory visualizations.
+3.  Categorical variables that are not easy to understand, for example the integer categories under the `REGION` column, should be relabeled using the `recode` function. You can do this within the `mutate` function. Here is an example code template (you should replace variable names as appropriate):
 
-**Why this question matters?**  
-This analysis challenges stereotypes about transfer students' academic success. By comparing withdrawal rates, we can evaluate whether institutional structures hinder transfer students' ability to thrive. Second-year students are the focus because they most commonly transfer after completing general requirements but before entering their major coursework. The results may identify systemic barriers that institutions need to address to ensure all students have equitable opportunities for success.
+    ```r
+    df %>%
+      mutate(
+        recoded_column = recode(
+            original_column,
+            `1` = "whatever category 1 equals",
+            `2` = "whatever category 2 equals",
+            ...etc.
+        )
+      )
+    ```
 
-# Preprocessing
+Additional preprocessing steps may be necessary, depending on the question you are trying to answer.
+Regardless of what you do, these steps should be documented in the usual way, where each code block is accompanied by a written explanation.
 
-```{r}
+**Each question in the remaining sections must be answered starting from the preprocessed dataset you end up with at the end of this section!**
 
-# Reprocessing Steps:
-# 1. Select relevant variables for analysis
-#  - withdrawal rates for both types of second-year students
-#  - CONTROL variable focused on institution type
-# 2. Rename columns for clarity and readability
-# 3. Reshape data for group-based comparisons (One-sided t-test)
-# NOTE:data containing N\A is reserved for initial analysis 
+> #### Important
+>
+> **Resist the temptation to drop any rows containing one or more `NA` values as an early step in your analysis!**
+>
+> This dataset contains a lot of missing (`NA`) values relative to other datasets that you've worked with during the semester.
+It is important to remember that just because some information may be missing for a school doesn't mean that the other information isn't useful, and many of the `tidyverse` commands are able to gracefully handle `NA` values.
+**If you need to filter out rows with `NA` values later in your analyses (e.g. for a linear model), this should be one of the last steps you do, and it should not affect the analysis and answers provided in other questions.**
 
+
+### Visualization section
+
+In this section you should conduct Exploratory Data Analysis (EDA) of the variables you are interested in. You are encouraged to reread the [Exploratory Data Analysis chapter](https://r4ds.had.co.nz/exploratory-data-analysis.html) of R for Data Science, where Hadley Wickham lists the two general goals of EDA as:
+
+> 1. What type of variation occurs within my variables?
+>
+> 2. What type of covariation occurs between my variables?
+
+I expect you to create at least 3 different graphs to investigate the two goals of EDA listed above, and at least one of the graphs must use faceting. Exactly what graphs you create will depend on what type of variables you have. You may decide to visualize more variables than the ones that you will be using in your model or hypothesis test, if you wish to investigate how those additional variables might confound or influence your later analyses
+
+Here are some types of graphs that you might want to plot to investigate the first goal (variation within each variable):
+
+* *Histograms*: visualize the distribution of a continuous variable. Can use `fill` parameter to break down by a secondary categorical variable (in which case you should also use the `position = "identity"` and `alpha` parameters). Make sure to adjust either `bins` or `binwidth` suitably.
+
+* *Density plot*: a smoothed line version of a histogram.
+
+* *Box plot*: also visualizes the distribution of a continuous variable, along with summary statistics (such as median and IQR). Use the `x` parameter (along with the `reorder` function to break down by a secondary categorical variable).
+
+* *Violin plot*: much like a box plot, but shows the density as well (by varying the width of the box). Use `geom_violin` instead of `geom_boxplot`, but arguments supplied to the geom functions are essentially the same.
+
+* *Scatter plot*: for visualizing the relationship between 2 continuous variables. Can use `color` parameter to break down by a secondary categorical variable.
+
+* *Bar plot*: for visualizing the distribution of a categorical variable (essentially the categorical equivalent of a histogram - the height of each bar is the count of rows in each category). Can use `fill` parameter to break down by a secondary categorical variable.
+
+For the second goal (covariation between variables), refer to the *R for Data Science* book for examples of graphs to use for combinations of different types of variables:
+
+* A [categorical and a continuous](https://r4ds.had.co.nz/exploratory-data-analysis.html#cat-cont) variable
+
+* [Two categorical](https://r4ds.had.co.nz/exploratory-data-analysis.html#two-categorical-variables) variables
+
+* [Two continuous](https://r4ds.had.co.nz/exploratory-data-analysis.html#two-continuous-variables) variables
+
+
+Here are some additional points to bear in mind:
+
+* You need at least 3 distinctly different graphs (i.e. different variables or different geom_function), but you are encouraged to make more. This is your chance to impress me with how much you have learned.
+
+* The graphs must be relevant to your question of interest!
+
+* At least one of these graphs should facet over a categorical variable (using `facet_wrap` or `facet_grid`). Depending on your question of interest (see previous point...), there are a number of ways you could satisfy this requirement:
+
+  * `pivot_longer()` multiple original columns into _name_ and _value_ columns, and facet over the categorical key column.
   
-college_reduced <- college %>%
-  # 1. Select relevant variables
-  select(
-    WDRAW_2YR_TRANS_YR2_RT,   # Transfer student withdrawal rate
-    WDRAW_ORIG_YR2_RT,        # Original student withdrawal rate 
-    CONTROL                   # Institution type (Public,Private,For-Profit)
-  ) %>%
+  * Facet over a categorical variable that you are already using in your analysis.
   
-  # 2. Rename columns for readability 
-  rename(
-    transfer_withdrawal_rate = WDRAW_2YR_TRANS_YR2_RT,
-    original_withdrawal_rate = WDRAW_ORIG_YR2_RT
-  ) %>%
+  * Pick a new categorical variable that you think might affect your data, and facet over that.
+
+* Every graph should be properly labeled (titles and axes).
+
+* Each graph should be preceded by a sentence or two of text stating *why* you are creating this graph.
+
+* Each graph should be followed by a short description of the patterns that you observe in the graph. For example:
+
+  * If a type of plot showing the variance of a variable (e.g. a histogram), describe the variance (center, shape, patterns, outliers, etc.). 
+  * If a type of plot showing the covariance between multiple variables, describe any patterns or relationships. How strong are these? What other variables might influence these patterns? 
+  * If you have broken the graph down by another categorical variable (using `fill`, `color`, or faceting), describe how the variation is different between these different subsets of the data.
+
+
+
+### Summary Statistics section
+
+You should calculate the summary statistics for each of the main variables that you will be including in your *Data Analysis* section. Most people will have two variables, if they followed the question structure suggested in the *Introduction* instructions above.
+
+For each categorical variable:
+
+* `group_by` itself
+
+* Within the `summarize` function, calculate the count of rows in each category (use the `n()` function).
+
+For each continuous variable:
+
+* `group_by` a categorical variable, if you have one. (If you are analyzing two continuous variables only, there is no need to group by anything.)
+
+* Using `summarize` calculate: the count of observations (use the `n()` function), mean, median, range, standard deviation, and interquartile range (use the `IQR()` function) of this continuous variable.
+
+
+
+### Data Analysis section
+
+In this question, you need to answer your question using either modeling or inference. Your analysis code also needs to be documented using plain text descriptions that explain what each code block does, and interprets the output.
+
+You should be modeling if your question is asking whether a continuous response variable is linearly related to one or more explanatory variables. For example, "is a person's height related to their arm span?"
+
+You should be using a hypothesis test if you question is asking whether there is a statistically significant difference (compared to random variation) in the reponse variable between two categories of a categorical explanatory variable. For example, "is there a statistically significant difference in height between short-armed and long-armed people?"
+
+#### If you are modeling...
+
+In this project we are modeling for explanation and understanding, not prediction (so we do NOT need to worry about any predictive modeling steps such as splitting our data up into test and train sets, or cross validating, or measuring predictive accuracy.)
+
+If you are modeling, your Data Analysis section should do the following:
+
+* Create a linear model using `lm(...)`
+
+* Report the model coefficients and the model's performance using `tidy` and `glance`, and include a short written discussion of what these numbers mean for your model.
+
+* Assess how well the assumptions of the linear model are met in your situation, using:
+
+  * observed vs. predicted plot
   
-  # 3. Reshape to long format
-  pivot_longer(
-    cols = c(transfer_withdrawal_rate, original_withdrawal_rate),
-    names_to = "student_type",
-    values_to = "withdrawal_rate",
-    values_drop_na = FALSE  # Explicitly keep NAs
-  ) %>%
+  * residual vs. predicted plot
   
-  # 4. Re-code categorical variables
-  mutate(
-    student_type = recode_factor(
-      student_type,
-      "transfer_withdrawal_rate" = "Transfer",
-      "original_withdrawal_rate" = "Original"
-    ),
-    CONTROL = recode_factor(
-      as.character(CONTROL),
-      "1" = "Public",
-      "2" = "Private",
-      "3" = "For-Profit"
-    )
-  )
+  * Q-Q plot
 
-# Verification check-ins
-college_reduced %>% count(student_type)
-college_reduced %>% count(CONTROL)
+  and follow these with a short written discussion of what these plots imply for the 3 assumptions.
 
-# Display processed data structure
-glimpse(college_reduced)
-```
+#### If you perfoming inference (i.e. a hypothesis test)...
 
-## Visualization
+If you are doing inference, your Data Analysis section should do the following:
 
-*Purpose:* This box plot compares the withdrawal rates of transfer and original second-year students. It allows us to examine the distribution of withdrawal rates within each group, identify potential outliers, and compare mean, median and variability between groups.
+* State your null *and* alternative hypotheses at the start of this section (in text, not code).
 
-```{r}
-# Box Plot comparing withdrawal rates for transfer vs. original students
-college_reduced %>%
-  #remove N/A data
-  filter(!is.na(withdrawal_rate)) %>%
+* State whether you are performing a one-sided or two-sided test. (You should probably be using a two-sided test.)
+
+* State what the test statistic is.
+
+* Use the `infer` package to test these hypothesis by following the workflow we have used in the assignments:
+
+  * Calculate the observed test statistic (i.e. the actual difference in the response variable between the two categories of the explanatory variable)
   
-  ggplot(aes(x = student_type, y = withdrawal_rate, fill = student_type)) +
-  geom_boxplot() +
+  * Create a null distribution by running 10,000 permutations of the original data.
   
-# title, x-axis, and y-axis labels for graph
-  labs(
-    title = "Withdrawal Rates: Transfer vs. Original Students",
-    x = "Student Type",
-    y = "Withdrawal Rate"
-  )  +
+  * Calculate the p-value.
   
-  theme_minimal()
-
-```
-
-The box plot shows that original students tend to have a higher median withdrawal rate (around 0.28) compared to transfer students (around 0.05). The interquartile range (spread of the middle 50% of the data) is wider for original students, suggesting more variability in their withdrawal rates. Transfer students have many outliers, indicating that while most have low withdrawal rates, some institutions have higher values.
-
-*Purpose:* This histogram shows the distribution of withdrawal rates for both transfer and original students. It allows us to examine the overall shape of each group's data, identify skewness, and observe how much the two distributions overlap. This helps us visually compare the variability between the two student types.
-
-```{r}
-# Histogram of withdraw rate for both groups among institutions
-
-college_reduced %>%
+  * Visualize the p-value using the `visualize` and `shade_p_value` functions.
   
-  #remove N/A data
-  filter(!is.na(withdrawal_rate)) %>%
-  ggplot(aes(x = withdrawal_rate, fill = student_type)) +
-  
-  geom_histogram(alpha = 0.5, bins = 25, position = "identity") +
-  
-  # title, x-axis, and y-axis labels for graph
-  labs(
-    title = "Withdrawal Rates Distribution: Transfer vs. Original Students",
-    x = "Withdrawal Rate",
-    y = "Count"
-  ) +
-  
-  theme_minimal()
-
-```
-The histogram shows that original students have a roughly bi-modal distribution, with noticeable peaks around 0.2 and 0.5. This suggests variability among institutions in how often original students withdraw. In contrast, transfer students show a right-skewed distribution, with most institutions having low withdrawal rates and a long tail toward higher values. The two groups overlap between 0.0 and 0.2, indicating that some institutions have similar withdrawal rates for both groups, but overall, the distributions differ.
-
-*Purpose:* This scatter plot visualizes the relationship between original student withdrawal rates and transfer student withdrawal rates across various institutions. By examining these rates, we explore whether institutional factors influence withdrawal patterns for each group. The plot is faceted by institution type—public, private nonprofit, and private for-profit—to investigate how different educational environments may affect withdrawal rates for both original and transfer students.
+  * Finally, write down whether you can reject your null hypothesis or not, and what this means for your original *question of interest*.
 
 
-```{r}
-# Scatter plot that displays the withdrawal rate for transfer and original students for the same institution
-college_wide <- college %>%
-  select(
-    transfer_withdrawal = WDRAW_2YR_TRANS_YR2_RT,
-    original_withdrawal = WDRAW_ORIG_YR2_RT,
-    CONTROL #control group implementation
+### Conclusions section
+
+In this section you should write 1-2 paragraphs summarizing your findings from all the previous sections (i.e. visualizations, summary statistics, and data analysis), and answering your original question of interest. Here are some things to think about as you are writing your conclusion:
+
+- what conclusion(s) can you draw from these analyses?
+
+- how would you answer your original question of interest?
+
+- do the analyses from these difference sections support each other, or conflict with each other?
+
+- are there any potentially confounding factors? (E.g. were there variables that looked important in your exploratory data analysis that you did not include in your model/hypothesis test?)
+
+- what does your finding imply for society? (I.e. why was this an interesting question to study in the first place?)
+
+Feel free to discuss other things that you think might be relevant to your analyses!
+
+
+> #### Important
+>
+> Below are two common misconceptions regarding this dataset that you should be aware of as you analyze your data and draw conclusions:
+>
+> *   **It is not possible to make statements about individual students using this dataset!**
+>    
+>     Each observation (row) in the dataset is a single college/university and the variables (columns) frequently represent **aggregated information** about students.
+    This means that many of the columns are often an average, sum, or a percentile for the entire student body or a specific subgroup of students.
+>
+> *   **It is not possible to extract data about a subgroup of students from a column that was aggregated over the entire student body.**
+>
+>     As an example, if one column is "median salary 5 years after gradution" and another column is "percentage of students majoring in data science", you cannot use these two columns to figure out the median salary for students graduating with a data science degree.
+    In general, the only way to make statements about different groups is if the column itself mentions that the quantity is aggregated over a specific subgroup.
+
+
+## Additional guidelines
+
+The following are additional guidelines for your Final Project submission:
+
+*   You should use the `tidyverse` functions in your work (particularly the ones in the lecture slides or the textbook), and not "base R" functions (`subset`, for example).
     
-  ) %>%
-  filter(!is.na(transfer_withdrawal) & !is.na(original_withdrawal)) %>%
-  distinct()
+*   Your R code should be clean and readable, which includes what it looks like after knitting.
+    **Code blocks should not run off the side of the page when knitted to PDF!**
 
-ggplot(college_wide, aes(x = original_withdrawal, y = transfer_withdrawal)) +
-  geom_point(alpha = 0.5) +
-  geom_abline(slope = 1, intercept = 0, color = "blue", linetype = "dashed") +
-  
-  #Different types of institutional environments 
-  facet_wrap(~ CONTROL, labeller = labeller(CONTROL = 
-        c("1" = "Public", 
-          "2" = "Private Nonprofit", 
-          "3" = "Private For-Profit"))) +
-  labs(
-    title = "Withdrawal Rates: Original vs Transfer Students",
-    x = "Original Student Withdrawal Rate (%)",
-    y = "Transfer Student Withdrawal Rate (%)",
-    caption = "Point=institution"
-  )  +
-  
-  theme_minimal()
+*   **The report's tone should be professional and should not read like a social media feed or personal blog**.
+    Refrain from editorializing about the project as a whole or about a specific question, as this is not an opinion paper.
+    Do not speculate, instead support your claims and explanations using data and analysis.
+    Avoid self-narration or writing about how you felt or what you were thinking as you complete each question, instead write as if you are constructing a step-by-step tutorial for others to use.
 
-```
-The scatter plot displays withdrawal rates for each institution, with each point representing one school. Most points fall below the blue reference line, indicating that, at the majority of institutions, original students have higher withdrawal rates than transfer students. Points above the line represent institutions where transfer students withdraw at higher rates.
-
-The data reveals a weak positive trend: as original student withdrawal rates increase, transfer student withdrawal rates tend to rise slightly as well. This suggests that institutional factors may play a role in overall student withdrawal patterns.
-
-When examining the faceted plots by institution type, we observe that original students are more likely to drop out across both private nonprofit and for-profit institutions. However, in public institutions, the trend is not as neat, with some institutions having higher transfer student.
-
-## Summary Statistics
-```{r}
-
-# Statistics for withdrawal rates 
-college_reduced %>%
-  filter(!is.na(withdrawal_rate)) %>%
-  
-  group_by(student_type) %>%
-  summarize(
-    count = n(),
-    mean = mean(withdrawal_rate),
-    median = median(withdrawal_rate),
-    sd = sd(withdrawal_rate),
-    range = max(withdrawal_rate) - min(withdrawal_rate),
-    IQR = IQR(withdrawal_rate)
-  )
-```
-
-The mean withdrawal rate for original students is 0.31, compared to 0.03 for transfer students, indicating original students are eight times more likely to withdraw. The median values (0.28 vs. 0.035) reinforce this consistent pattern, regardless of outliers. Original students also show greater variability, with a higher standard deviation (0.155 vs. 0.0121) and a wider range (0.723 vs. 0.287).
-
-The high withdrawal rates among original students may reflect academic challenges or institutional barriers, while transfer students—who, due to their prior experience or selective enrollment, might adapt more effectively—show lower rates. The wide IQR for original students suggests inconsistent challenges across institutions, whereas the narrow IQR for transfer students points to more uniform institutional experiences.
-
-## Data Analysis
-
- NULL(H~0~): The mean withdraw rates are the same for both transfer and non-transfer(original) second year students.
-  
- Second(H~1~): The mean withdrawal rates differ between original and transfer students
-
-*I am conducting a 2-sided hypothesis test.*
-
-Test statistic: Difference in means of original and transfer students.
-
-```{r}
-# remove data with N/A values
-college_testing <- college_reduced %>%
-  filter(!is.na(withdrawal_rate))
-
-# calculating the difference in mean for transfer and original students
-obs_stats <- college_testing %>%
-  specify(withdrawal_rate ~ student_type) %>%
-  calculate(stat = "diff in means", order = c("Original", "Transfer"))
-
-# to test null use permutation of 10000
-null <- college_testing %>%
-  specify(withdrawal_rate ~ student_type) %>%
-  hypothesize(null = "independence") %>%
-  generate(reps = 10000, type = "permute") %>%
-  calculate(stat = "diff in means", order = c("Original", "Transfer"))
-
-# calculate the p value
-#NOTE: The p value is not 0, but instead it is very small
-p_value <- null %>% 
-  get_p_value(obs_stat = obs_stats, direction = "two-sided")
-
-# visualize the null distribution and p-value
-null %>%
-  visualize() +
-  shade_p_value(obs_stat = obs_stats, direction = "two-sided")
-
-# display the statistics and p value
-print(obs_stats)
-print(p_value)
+*   **Late submissions for the final project will not be accepted, no exceptions.**
 
 
-```
-*Results:*
+## Checklist
 
-  - Observed difference in means: 0.273295	
+* **General**
+  * Answers are written in full sentences and paragraphs.
+  * Answers are clear and not garbled.
+  * Tone is professional.
+  * Correct spelling and grammar.
+  * All graphs appropriately labelled (title and axes).
+  * Code should be accompanied by written descriptions and interpretations (ask yourself "Would a random reader understand why I created this code chunk and what its code is doing?").
+  * Formatting:
+    * Don't display tables longer than 1 page (instead, use `head()` to show first 6 rows only).
+    * Tables do not overrun right margin.
+    * Code does not overrun right margin.
+  * Did you change your name at the start of the document?
+  * Did you sumbit a PDF on Blackboard *and* push to GitHub?
+* **Introduction section**
+  * Question of interest is stated.
+  * Explanation of why this question is interesting.
+  * State the columns you will be using to answer this question, and describe what data each variable contains.
+  * State whether you will be using modeling or inference to answer your question.
+* **Preprocessing section**
+  * Extract the columns that you need.
+  * Rename this columns more descriptively.
+  * Recode any integer categorical variables.
+  * Do *not* remove missing data at this stage.
+  * Steps are documented with written descriptions of what each code chunk is doing.
+* **Visualization section**
+  * At least 3 graphs (relevant to question, and showing distinctly different information).
+  * One graph must use faceting to show multiple sub-plots.
+  * Each graph introduced by sentence(s) explaining why it has been created.
+  * Each graph followed by an interpretation.
+  * (Optional) A brief conclusion summarizing any overall patterns that you think are most relevant to your question of interest, if you found any.
+* **Summary Statistics section**
+  * Summary stats calculated for each of the variables identified in the Introduction section.
+  * Written interpretations of the numbers you have just calculated.
+* **Data Analysis section**
+  * Code should be accompanied by written descriptions and interpretations.
+  * If using inference:
+    * State null and alternative hypotheses.
+    * State whether you are using a one- or two-sided test.
+    * State what you test statistic is.
+    * Calculate your observed test statistic.
+    * Create a null distribution.
+    * Use null distribution to calculate the p-value of the observed statistic.
+    * Visualize the p-value by plotting the observed statistic and the null distribution.
+    * Compare the p-value to alpha, and interpret what this means for your original hypotheses.
+  * If using modeling:
+    * Create a linear model.
+    * Report coefficients (slope(s) and intercept) and R<sup>2</sup>, and discuss what these numbers mean for your model.
+    * Create 3 graphs to check the model assumptions:
+      * Observed vs. predicted plot
+      * Residuals vs predicted plot
+      * Q-Q plot.
+    * Interpret these plots.
+* **Conclusions section**
+  * Integrate the results from *all* previous sections in this project (aim to write at least two paragraphs).
 
-  - p-value: 0.0001 < $\alpha$: 0.05
+## Grade
 
-Since the p-value (< 0.0001) is much smaller than the significance level ($\alpha$ = 0.05), we reject the null hypothesis. There is statistical evidence that withdrawal rates differ between original and transfer students.
+Grades for the final project will be based on the correctness and readability of your R code, how well your report is written (the report should be structured, coherent, and follow the standard rules of spelling and grammar), and how well you answered your question of interest using your visualizations, analysis, and written answers.
 
-The difference (0.273) suggests that original students withdraw at a higher rate than transfer students in their second year.
 
-The null distribution plot displays simulation under the assumption that student type (original vs. transfer) has no effect (null hypothesis is true). The distribution is clustered around 0.0, indicating that random permutations produce almost zero differences. The observed difference (0.273, marked by red line) at the the right of this distribution, where no permuted differences occur. This visual supports the rejection of null hypothesis.
+## How to submit
 
-## Conclusion
+To submit:
 
-This study examined whether second-year withdrawal rates differ between original and transfer students. Visualizations and summary statistics revealed clear trends: original students exhibited higher withdrawal rates (median = 30%, wide IQR of 20–45%) with variability across institutions, while transfer students had consistently lower rates (median = 5%, tight IQR of 2–5%), suggesting consistency. The hypothesis test confirmed these observations (p < 0.0001), rejecting the null hypothesis that withdrawal rates are equal. This statistical significance, combined with the histograms and box plots, highlights that original students withdraw more, evidently in public institutions.
+1.  Commit and push your code to GitHub.
 
-Potential explanations for this disparity include original students facing adjustment challenges (e.g., "sophomore slump," financial stress), whereas transfer students may benefit from prior college experience or more careful institution selection. However, the data cannot assess individual student experiences (only institutional averages), and unmeasured factors (e.g., age, socioeconomic status) may influence results. For institutions, targeted support (e.g., academic advising, peer mentoring) for first-time students could decrease withdrawals, especially in public schools. This analysis highlights systemic differences in student continuation of their studies, urging research into underlying causes and potential solutions.
+2.  Knit your Markdown document to the PDF format, export (download) the PDF file from RStudio Server, and then upload it to *Final Project* posting on Blackboard.
+
+## Cheatsheets
+
+You are encouraged to review and keep the following cheatsheets handy while working on the final project:
+
+*   [What graph should I make?][what-graph]
+
+*   [Data wrangling cheatsheet (`dplyr` package)][dplyr-cheatsheet]
+
+*   [Data visualization cheatsheet (`ggplot2` package)][ggplot2-cheatsheet]
+
+*   [RStudio cheatsheet][rstudio-cheatsheet]
+
+*   [R Markdown cheatsheet][rmarkdown-cheatsheet]
+
+*   [R Markdown reference][rmarkdown-reference]
+
+[what-graph]:           https://drive.google.com/file/d/1zsedQ9kHFtxhFE3R99PQ1a_yTTamJu3e/view?usp=sharing
+[dplyr-cheatsheet]:     https://gmuedu-my.sharepoint.com/:b:/g/personal/dwhite34_gmu_edu/ESQlogUDLfpNiXc3cD40crwBz0C0zfESw-6jRwTrHT4UBA?e=bQKhzS
+[ggplot2-cheatsheet]:   https://gmuedu-my.sharepoint.com/:b:/g/personal/dwhite34_gmu_edu/ESLxplzb1sdLszfqs3208G0BdScfSbNqrikzJ1pIKczsFw?e=cwYcjM
+[rstudio-cheatsheet]:   https://gmuedu-my.sharepoint.com/:b:/g/personal/dwhite34_gmu_edu/EVAQYYLorhxPh49NdlZV4KgBNNBQHRdJNthHK0ZuID8_Gw?e=dfzJPt
+[rmarkdown-reference]:  https://gmuedu-my.sharepoint.com/:b:/g/personal/dwhite34_gmu_edu/Ed4VQ0-6mEhBp2IkjIdGDK0BwaR9BDzEnpnVyyxDn_gasg?e=1eLHsa
+[rmarkdown-cheatsheet]: https://gmuedu-my.sharepoint.com/:b:/g/personal/dwhite34_gmu_edu/ETKKUWqePhRJv-VvAOsg4F4BPte7yKfQJKyyr1gNMg46yQ?e=hJPHXV
