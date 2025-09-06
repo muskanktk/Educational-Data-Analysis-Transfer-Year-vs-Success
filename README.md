@@ -1,5 +1,5 @@
 ---
-title: "Educational Data Anlysis: Transfer vs Success"
+title: "Final Project"
 author: "Muskan Khattak"
 date: "`r Sys.Date()`"
 documentclass: article
